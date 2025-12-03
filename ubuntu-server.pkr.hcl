@@ -119,12 +119,6 @@ variable "ssh_password" {
   sensitive   = true
 }
 
-variable "ssh_handshake_attempts" {
-  type        = number
-  description = "Number of SSH connection attempts"
-  default     = 10
-}
-
 #####################################################################################
 # Sources
 #####################################################################################
@@ -146,7 +140,6 @@ source "virtualbox-iso" "UbuntuServer" {
     ssh_username           = var.ssh_username
     ssh_password           = var.ssh_password
     ssh_timeout            = var.ssh_timeout
-    ssh_handshake_attempts = var.ssh_handshake_attempts
     communicator           = var.communicator
 
     # Boot/Other Config

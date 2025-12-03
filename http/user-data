@@ -19,7 +19,6 @@ autoinstall:
   packages:
   - openssh-server
   - cloud-init
-  - net-tools
   - curl
   - wget
   user-data:
@@ -28,5 +27,5 @@ autoinstall:
   late-commands:
   - echo 'vagrant ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/vagrant
   - chmod 440 /target/etc/sudoers.d/vagrant
-  - curtin in-target --target=/target -- sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
-  - curtin in-target --target=/target -- sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  # - curtin in-target --target=/target -- sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  # - curtin in-target --target=/target -- sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
