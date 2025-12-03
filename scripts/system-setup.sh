@@ -27,5 +27,3 @@ sudo rm -rf /var/lib/apt/lists/*
 
 sudo touch /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
 echo "network: {config: disabled}" | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
-
-echo "System update and Vagrant preparation complete."
