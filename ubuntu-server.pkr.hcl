@@ -179,57 +179,13 @@ source "virtualbox-iso" "UbuntuServer" {
 build {
   sources = ["source.virtualbox-iso.UbuntuServer"]
 
-  # Update system and install dependencies
+  # Provision via helper scripts
   provisioner "shell" {
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get upgrade -y",
-      "sudo apt-get install -y build-essential dkms linux-headers-$(uname -r) wget curl"
-    ]
-  }
-
-  # Install VirtualBox Guest Additions from mounted ISO
-  # Packer automatically mounts the Guest Additions ISO that matches your VirtualBox version
-  provisioner "shell" {
-    inline = [
-      "sudo mkdir -p /mnt/vbox",
-      "sudo mount -o loop /home/vagrant/VBoxGuestAdditions.iso /mnt/vbox || sudo mount -o loop /root/VBoxGuestAdditions.iso /mnt/vbox",
-      "sudo sh /mnt/vbox/VBoxLinuxAdditions.run || true",
-      "sudo umount /mnt/vbox"
-    ]
-  }
-
-  # Install Vagrant insecure public key
-  provisioner "shell" {
-    inline = [
-      "mkdir -p /home/vagrant/.ssh",
-      "chmod 0700 /home/vagrant/.ssh",
-      "curl -o /home/vagrant/.ssh/authorized_keys https://raw.githubusercontent.com/hashicorp/vagrant/main/keys/vagrant.pub",
-      "chmod 0600 /home/vagrant/.ssh/authorized_keys",
-      "chown -R vagrant:vagrant /home/vagrant/.ssh"
-    ]
-  }
-
-  # Configure SSH for Vagrant
-  provisioner "shell" {
-    inline = [
-      "sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config",
-      "sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config",
-      "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config",
-      "sudo systemctl restart ssh"
-    ]
-  }
-
-  # Clean up to reduce box size
-  provisioner "shell" {
-    inline = [
-      "sudo apt-get clean",
-      "sudo apt-get autoremove -y",
-      "sudo rm -rf /tmp/*",
-      "sudo rm -rf /var/tmp/*",
-      "sudo dd if=/dev/zero of=/EMPTY bs=1M || true",
-      "sudo rm -f /EMPTY",
-      "cat /dev/null > ~/.bash_history && history -c"
+    scripts = [
+      "scripts/system-setup.sh",
+      "scripts/guest-additions.sh",
+      "scripts/vagrant-ssh.sh",
+      "scripts/cleanup.sh"
     ]
   }
 
