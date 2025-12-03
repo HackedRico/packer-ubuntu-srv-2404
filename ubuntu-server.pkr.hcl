@@ -4,6 +4,10 @@ packer {
       version = ">= 1.1.2"
       source  = "github.com/hashicorp/virtualbox"
     }
+    vagrant = {
+      version = ">= 1.1.0"
+      source  = "github.com/hashicorp/vagrant"
+    }
   }
 }
 
@@ -15,7 +19,7 @@ packer {
 variable "vm_name" {
   type        = string
   description = "This is the name of the OVF file for the new VM"
-  default     = "ubuntu-64"
+  default     = "vagrant-ubuntu2404"
 }
 
 variable "guest_os_type" {
@@ -33,7 +37,7 @@ variable "ssh_timeout" {
 variable "shutdown_command" {
   type        = string
   description = "Command to shutdown VM when provisions are created"
-  default     = "echo 'ubuntu' | sudo -S shutdown -P now"
+  default     = "echo 'vagrant' | sudo -S shutdown -P now"
 }
 
 variable "boot_wait" {
@@ -89,28 +93,27 @@ variable "http_directory" {
 variable "iso_url" {
   type        = string
   description = "URL link to download Iso file"
-  # default     = "https://releases.ubuntu.com/22.04/ubuntu-22.04.5-live-server-amd64.iso"
-  default     = "./iso/ubuntu-22.04.5-live-server-amd64.iso" # Local path for testing
+  default     = "https://releases.ubuntu.com/24.04/ubuntu-24.04.3-live-server-amd64.iso"
 }
 
 variable "iso_checksum" {
   type        = string
   description = "Iso download validation"
-  default     = "sha256:9bc6028870aef3f74f4e16b900008179e78b130e6b0b9a140635434a46aa98b0"
+  default     = "sha256:c3514bf0056180d09376462a7a1b4f213c1d6e8ea67fae5c25099c6fd3d8274b"
 }
 
 # Credentials 
 variable "ssh_username" {
   type        = string
   description = "SSH connection username"
-  default     = "ubuntu"
+  default     = "vagrant"
   sensitive   = true
 }
 
 variable "ssh_password" {
   type        = string
   description = "SSH connection password"
-  default     = "ubuntu"
+  default     = "vagrant"
   sensitive   = true
 }
 
@@ -143,8 +146,7 @@ source "virtualbox-iso" "UbuntuServer" {
   ssh_handshake_attempts = var.ssh_handshake_attempts
   shutdown_command       = var.shutdown_command
   vm_name                = var.vm_name
-  vm_name                = "CalderaServerOVA"
-  format                 = "ova"
+  format                 = "ovf"
 
   cd_files = [
     "./http/meta-data",
@@ -157,7 +159,7 @@ source "virtualbox-iso" "UbuntuServer" {
         "<esc><wait>",
         "c<wait>",
         "set gfxpayload=keep<enter>",
-        "linux /casper/vmlinuz autoinstall ds=nocloud-net ---<enter>", # Something like this
+        "linux /casper/vmlinuz autoinstall ds=nocloud;s=/dev/sr1/ ---<enter>",
         "initrd /casper/initrd<enter>",
         "boot<enter>"
     ]
@@ -177,17 +179,63 @@ source "virtualbox-iso" "UbuntuServer" {
 build {
   sources = ["source.virtualbox-iso.UbuntuServer"]
 
-  # Commands to Provision Instance VBox Extension Pack
+  # Update system and install dependencies
   provisioner "shell" {
     inline = [
       "sudo apt-get update",
-      "sudo apt-get install -y build-essential dkms linux-headers-$(uname -r) wget",
-      "wget https://download.virtualbox.org/virtualbox/7.0.18/VBoxGuestAdditions_7.0.18.iso -O /tmp/VBoxGuestAdditions.iso",
-      "sudo mkdir -p /mnt/vbox",
-      "sudo mount -o loop /tmp/VBoxGuestAdditions.iso /mnt/vbox",
-      "sudo sh /mnt/vbox/VBoxLinuxAdditions.run || true",
-      "sudo umount /mnt/vbox",
-      "rm /tmp/VBoxGuestAdditions.iso"
+      "sudo apt-get upgrade -y",
+      "sudo apt-get install -y build-essential dkms linux-headers-$(uname -r) wget curl"
     ]
+  }
+
+  # Install VirtualBox Guest Additions from mounted ISO
+  # Packer automatically mounts the Guest Additions ISO that matches your VirtualBox version
+  provisioner "shell" {
+    inline = [
+      "sudo mkdir -p /mnt/vbox",
+      "sudo mount -o loop /home/vagrant/VBoxGuestAdditions.iso /mnt/vbox || sudo mount -o loop /root/VBoxGuestAdditions.iso /mnt/vbox",
+      "sudo sh /mnt/vbox/VBoxLinuxAdditions.run || true",
+      "sudo umount /mnt/vbox"
+    ]
+  }
+
+  # Install Vagrant insecure public key
+  provisioner "shell" {
+    inline = [
+      "mkdir -p /home/vagrant/.ssh",
+      "chmod 0700 /home/vagrant/.ssh",
+      "curl -o /home/vagrant/.ssh/authorized_keys https://raw.githubusercontent.com/hashicorp/vagrant/main/keys/vagrant.pub",
+      "chmod 0600 /home/vagrant/.ssh/authorized_keys",
+      "chown -R vagrant:vagrant /home/vagrant/.ssh"
+    ]
+  }
+
+  # Configure SSH for Vagrant
+  provisioner "shell" {
+    inline = [
+      "sudo sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config",
+      "sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config",
+      "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config",
+      "sudo systemctl restart ssh"
+    ]
+  }
+
+  # Clean up to reduce box size
+  provisioner "shell" {
+    inline = [
+      "sudo apt-get clean",
+      "sudo apt-get autoremove -y",
+      "sudo rm -rf /tmp/*",
+      "sudo rm -rf /var/tmp/*",
+      "sudo dd if=/dev/zero of=/EMPTY bs=1M || true",
+      "sudo rm -f /EMPTY",
+      "cat /dev/null > ~/.bash_history && history -c"
+    ]
+  }
+
+  # Create Vagrant box
+  post-processor "vagrant" {
+    output = "ubuntu-24.04-vagrant.box"
+    compression_level = 9
   }
 }
