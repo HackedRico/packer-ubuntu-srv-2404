@@ -58,7 +58,7 @@ variable "communicator" {
 variable "disk_size" {
   type        = number
   description = "Size in megabytes of the VM hard drive"
-  default     = 40000
+  default     = 64000
 }
 
 variable "cpus" {
