@@ -20,17 +20,17 @@ autoinstall:
     install-server: true
     allow-pw: true
   packages:
-    - openssh-server
-    - cloud-init
-    - net-tools
-    - curl
-    - wget
+  - openssh-server
+  - cloud-init
+  - net-tools
+  - curl
+  - wget
   user-data:
     disable_root: false
     timezone: UTC
   late-commands:
-    - echo 'vagrant ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/vagrant
-    - chmod 440 /target/etc/sudoers.d/vagrant
-    - curtin in-target --target=/target -- sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
-    - curtin in-target --target=/target -- sed -i 's/^#PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-    - curtin in-target --target=/target -- sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  - echo 'vagrant ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/vagrant
+  - chmod 440 /target/etc/sudoers.d/vagrant
+  - curtin in-target --target=/target -- sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+  - curtin in-target --target=/target -- sed -i 's/^#PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+  - curtin in-target --target=/target -- sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
