@@ -1,0 +1,30 @@
+# Packer
+packer_cache/
+output-*/
+*.box
+crash.log
+*.log
+
+# Vagrant
+.vagrant/
+*.box
+
+# ISO files
+*.iso
+iso/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+tmp/
+temp/
