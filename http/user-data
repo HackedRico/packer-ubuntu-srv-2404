@@ -7,7 +7,9 @@ autoinstall:
   network:
     version: 2
     ethernets:
-      ens3:
+      en-default:
+        match:
+          name: "en*"
         dhcp4: true
   storage:
     layout:
