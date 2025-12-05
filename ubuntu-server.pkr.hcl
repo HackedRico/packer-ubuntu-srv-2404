@@ -144,6 +144,7 @@ source "virtualbox-iso" "UbuntuServer" {
 
     # Boot/Other Config
     guest_os_type          = var.guest_os_type
+    headless               = true
     format                 = "ovf"
     http_directory         = var.http_directory
     
